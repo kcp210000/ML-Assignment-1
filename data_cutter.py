@@ -2,7 +2,7 @@ import json
 import random
 
 # Function to load and create a balanced dataset
-def create_balanced_dataset(full_data, reviews_per_star=1000):
+def create_balanced_dataset(full_data, reviews_per_star):
     # Group the reviews by their star ratings
     star_groups = {1: [], 2: [], 3: [], 4: [], 5: []}
 
@@ -27,10 +27,10 @@ with open(full_train_data_path, 'r') as file:
     full_train_data = json.load(file)
 
 # Create the balanced dataset (e.g., 1000 reviews per star)
-balanced_data = create_balanced_dataset(full_train_data, reviews_per_star=1000)
+balanced_data = create_balanced_dataset(full_train_data, 250)
 
 # Save the balanced dataset to a new file
-balanced_data_path = 'cut_training.json'  # Path to save the balanced data
+balanced_data_path = 'tiny_training.json'  # Path to save the balanced data
 with open(balanced_data_path, 'w') as file:
     json.dump(balanced_data, file)
 

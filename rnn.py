@@ -35,7 +35,7 @@ class RNN(nn.Module):
         # [to fill] obtain output layer representations
         output = self.W(hidden.squeeze(0))
         # [to fill] sum over output 
-
+        
         # [to fill] obtain probability dist.
         predicted_vector = self.softmax(output)
 
@@ -90,6 +90,8 @@ if __name__ == "__main__":
     last_validation_accuracy = 0
 
     while not stopping_condition:
+        if epoch > args.epochs:
+            break
         random.shuffle(train_data)
         model.train()
         # You will need further code to operationalize training, ffnn.py may be helpful
@@ -192,7 +194,7 @@ if __name__ == "__main__":
                 word_embedding['<UNK>'] = np.zeros(embedding_dim)  # Add <UNK> with zero vector
 
             vectors = [word_embedding.get(i.lower(), word_embedding['<UNK>']) for i in input_words]
-            vectors = torch.tensor(vectors).view(len(vectors), 1, -1)
+            vectors = torch.tensor(vectors).view(len(vectors), 1, -1).float()
             output = model(vectors)
             predicted_label = torch.argmax(output)
             correct += int(predicted_label == gold_label)

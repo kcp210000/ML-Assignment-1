@@ -1,7 +1,7 @@
 import json
 
 # Path to your JSON file (change this to the correct path)
-file_path = 'cut_training.json'
+file_path = 'tiny_training.json'
 
 # Open and load the JSON data
 with open(file_path, 'r') as file:
