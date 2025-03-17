@@ -31,29 +31,30 @@ class RNN(nn.Module):
 
     def forward(self, inputs):
         # [to fill] obtain hidden layer representation (https://pytorch.org/docs/stable/generated/torch.nn.RNN.html)
-        _, hidden = 
+        _, hidden = self.rnn(inputs)
         # [to fill] obtain output layer representations
-
+        output = self.W(hidden.squeeze(0))
         # [to fill] sum over output 
 
         # [to fill] obtain probability dist.
+        predicted_vector = self.softmax(output)
 
         return predicted_vector
 
 
-def load_data(train_data, val_data):
+def load_data(train_data, val_data, test_data):
     with open(train_data) as training_f:
         training = json.load(training_f)
     with open(val_data) as valid_f:
         validation = json.load(valid_f)
+    with open(test_data) as test_f:
+        test = json.load(test_f)
 
-    tra = []
-    val = []
-    for elt in training:
-        tra.append((elt["text"].split(),int(elt["stars"]-1)))
-    for elt in validation:
-        val.append((elt["text"].split(),int(elt["stars"]-1)))
-    return tra, val
+    tra = [(elt["text"].split(), int(elt["stars"] - 1)) for elt in training]
+    val = [(elt["text"].split(), int(elt["stars"] - 1)) for elt in validation]
+    tst = [(elt["text"].split(), int(elt["stars"] - 1)) for elt in test]
+    
+    return tra, val, tst
 
 
 if __name__ == "__main__":
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("========== Loading data ==========")
-    train_data, valid_data = load_data(args.train_data, args.val_data) # X_data is a list of pairs (document, y); y in {0,1,2,3,4}
+    train_data, valid_data, test_data = load_data(args.train_data, args.val_data, args.test_data) # X_data is a list of pairs (document, y); y in {0,1,2,3,4}
 
     # Think about the type of function that an RNN describes. To apply it, you will need to convert the text data into vector representations.
     # Further, think about where the vectors will come from. There are 3 reasonable choices:
@@ -175,6 +176,38 @@ if __name__ == "__main__":
             last_train_accuracy = trainning_accuracy
 
         epoch += 1
+
+    # ================== TEST ACCURACY ==================
+    model.eval()
+    correct, total = 0, 0
+    print("========== Testing Model ==========")
+
+    for minibatch_index in tqdm(range(len(test_data) // minibatch_size)):
+        for example_index in range(minibatch_size):
+            input_words, gold_label = test_data[minibatch_index * minibatch_size + example_index]
+            input_words = " ".join(input_words).translate(str.maketrans("", "", string.punctuation)).split()
+            # Ensure <UNK> exists in word_embedding
+            embedding_dim = next(iter(word_embedding.values())).shape[0]  # Get dimension of first embedding
+            if '<UNK>' not in word_embedding:
+                word_embedding['<UNK>'] = np.zeros(embedding_dim)  # Add <UNK> with zero vector
+
+            vectors = [word_embedding.get(i.lower(), word_embedding['<UNK>']) for i in input_words]
+            vectors = torch.tensor(vectors).view(len(vectors), 1, -1)
+            output = model(vectors)
+            predicted_label = torch.argmax(output)
+            correct += int(predicted_label == gold_label)
+            total += 1
+
+    test_accuracy = correct / total
+    print(f"Test accuracy: {test_accuracy}")
+
+    # Write results to file
+    with open("rnn_results.out", "w") as results_file:
+        results_file.write(f"Final Training Accuracy: {last_train_accuracy:.4f}\n")
+        results_file.write(f"Final Validation Accuracy: {last_validation_accuracy:.4f}\n")
+        results_file.write(f"Test Accuracy: {test_accuracy:.4f}\n")
+
+    print("Results saved to results.out")
 
 
 
